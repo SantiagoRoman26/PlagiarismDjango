@@ -46,8 +46,8 @@ INSTALLED_APPS = [
     'autorizar',
     'login',
     'documento',
-    
-]
+    'gestionDocumentos',
+]   
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -145,3 +145,9 @@ XS_SHARING_ALLOWED_METHODS = ['POST','GET','OPTIONS', 'PUT', 'DELETE']
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+EMAIL_HOST = 'smtp.googlemail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'santiagoromanprueba@gmail.com'
+EMAIL_HOST_PASSWORD = 'lelpzcumdqgmoygm'
+EMAIL_USE_TLS = True  

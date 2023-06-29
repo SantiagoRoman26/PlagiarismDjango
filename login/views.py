@@ -8,6 +8,10 @@ from modelo.models import Usuario, Estudiante, Docente
 from django.contrib import messages
 from django.contrib.auth.forms import PasswordChangeForm
 from formtools.wizard.views import SessionWizardView
+from django.template.loader import get_template
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
 
 # Create your views here.
 def autenticar(request):
@@ -49,6 +53,29 @@ def desautenticar(request):
     logout(request)
     return render (request, 'login/logout.html')
 
+def emailAutorizacion(User_mail, User_nombre, Admin_Email, Admin_nombre, url):
+    context = { 
+        'user_mail' : User_mail,
+        'user_nombre' : User_nombre,
+        'url' : url,
+        'admin' : Admin_nombre
+               }
+    template = get_template('correo/Autorizacion.html')
+    content = template.render(context)
+    email = EmailMultiAlternatives(
+        'Registro de docente',
+        'Nuevo Registro',
+        settings.EMAIL_HOST_USER,
+        [Admin_Email] #todos los destinatarios a quien enviarlos
+        #cc= [] #envio de una copia
+    )
+    email.attach_alternative(content, 'text/html')
+    email.send()
+    print ('Correo Enviado!')
+
+
+
+    # Wizard para registrarse y solicitar un rol
 TEMPLATES = {
         "registro": 'login/registrar.html',
         "rol": 'autorizar/solicitarRol.html',
@@ -91,11 +118,18 @@ class RegistrarWizardView(SessionWizardView):
             estudiante_model.save()
             pass
         elif rol == 'docente':
-            docente_model = Docente()
-            docente_model.usuario = usuario_model
+            # docente_model = Docente()
+            # docente_model.usuario = usuario_model
             usuario_model.estado = False
             usuario_model.save()
-            docente_model.save()
+            # docente_model.save() el docente solo se guardara despues de que se acepte la autorizacion
+            nombre = usuario_model.nombres + ' ' + usuario_model.apellidos
+            usuarios = User.objects.all()
+            current_site = get_current_site(self.request)
+            for usuarioAdmin in usuarios:
+                if usuarioAdmin.is_superuser:
+                    url = self.request.build_absolute_uri(reverse('activar', args=[usuario_model.usuario_id]))
+                    emailAutorizacion(usuario_model.correo, nombre, usuarioAdmin.email, usuarioAdmin.first_name, url)
             pass
         else:
             estudiante_model = Estudiante()

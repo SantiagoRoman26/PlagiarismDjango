@@ -27,6 +27,7 @@ urlpatterns = [
     path('usuario/', include('usuario.urls')),
     path('plagio/',include('plagio.urls')),
     path('autorizar/',include('autorizar.urls')),
+    path('asignacion/',include('gestionDocumentos.urls')),
 
     path('login/', include('login.urls')),
     path('about/', views.about, name='about'),

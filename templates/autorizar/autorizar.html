@@ -1,0 +1,19 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/autorizar.css' %}">
+</head>
+<body>
+    <div class="form-container">
+        <form method="post">
+            {% csrf_token %}
+            {{ formulario_autorizacion.as_p }}
+
+            <div class="button-container">
+                <button class="submit-button" type="submit">Enviar</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

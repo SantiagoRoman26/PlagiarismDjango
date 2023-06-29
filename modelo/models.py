@@ -1,4 +1,5 @@
 from django.db import models
+import os
 
 class Usuario(models.Model):
     usuario_id = models.AutoField(primary_key = True)
@@ -38,12 +39,17 @@ class Documento(models.Model):
 
     def __int__(self):   
         return self.documento_id
+    
+    def get_nombre_archivo(self):
+        return os.path.basename(self.archivo.name)
 
 class GestionDocumentos(models.Model):
     gestion_id = models.AutoField(primary_key = True)
     estudiante = models.ForeignKey(Estudiante, null = True, blank = True, on_delete = models.SET_NULL)
     docente = models.ForeignKey(Docente, on_delete = models.PROTECT)                                 #el campo esta protegido se deben elminar todos los resultados o Gestiones relacionados al docente 
     documento = models.ForeignKey(Documento, on_delete = models.CASCADE)
+    titulo= models.CharField(max_length = 70, null = True, default= "")
+    comentario= models.CharField(max_length = 70, null = True, default= "")
 
     def __int__(self):   
         return self.gestion_id

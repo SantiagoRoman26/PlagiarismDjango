@@ -3,11 +3,13 @@ from modelo.models import Usuario
 
 def index(request):
     user = request.user 
-    usuario = Usuario.objects.get(correo=user.email)
-    if usuario.estado:                         
-        return render(request, 'homepage.html')
-    else:
-        return render(request, 'login/deactive.html')
+    if user.is_active:
+        usuario = Usuario.objects.get(correo=user.email)
+        if usuario.estado:                         
+            return render(request, 'homepage.html')
+        else:
+            return render(request, 'login/deactive.html')
+    return render(request, 'homepage.html')
 
 def about(request):
      return render(request, 'about.html')
