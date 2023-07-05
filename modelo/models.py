@@ -7,6 +7,7 @@ class Usuario(models.Model):
     apellidos = models.CharField(max_length = 70, null = False)
     correo = models.EmailField(max_length = 105, null = False, unique = True)
     date_created = models.DateTimeField(auto_now_add = True)
+    autorizado = models.BooleanField(default = False)
     estado = models.BooleanField(default = True) # en el caso de que un alumno se retire, su estado pasara a false hasta decidir si se eliminara o no 
 
     def __int__(self):   
@@ -46,7 +47,7 @@ class Documento(models.Model):
 class GestionDocumentos(models.Model):
     gestion_id = models.AutoField(primary_key = True)
     estudiante = models.ForeignKey(Estudiante, null = True, blank = True, on_delete = models.SET_NULL)
-    docente = models.ForeignKey(Docente, on_delete = models.PROTECT)                                 #el campo esta protegido se deben elminar todos los resultados o Gestiones relacionados al docente 
+    docente = models.ForeignKey(Docente, null = True, blank = True, on_delete = models.PROTECT)                                 #el campo esta protegido se deben elminar todos los resultados o Gestiones relacionados al docente 
     documento = models.ForeignKey(Documento, on_delete = models.CASCADE)
     titulo= models.CharField(max_length = 70, null = True, default= "")
     comentario= models.CharField(max_length = 70, null = True, default= "")

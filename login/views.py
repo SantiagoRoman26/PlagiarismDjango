@@ -32,7 +32,11 @@ def autenticar(request):
                     usuario = Usuario.objects.get(correo=user.email)
                     if usuario.estado:                         
                         login(request, user)
-                        return HttpResponseRedirect(reverse('homepage'))
+                        next_url = request.GET.get('next')  # Obtener la URL a la que se intentó acceder
+                        if next_url:
+                            return HttpResponseRedirect(next_url)
+                        else:
+                            return HttpResponseRedirect(reverse('homepage'))
                     else:
                         return HttpResponseRedirect(reverse('no_activo'))
                 else:    
@@ -113,14 +117,22 @@ class RegistrarWizardView(SessionWizardView):
         # Procesar formulario de rol
         rol = formulario_rol_data['rol']
         if rol == 'estudiante':
-            estudiante_model = Estudiante()
-            estudiante_model.usuario = usuario_model
-            estudiante_model.save()
+
+            usuario_model.estado = False
+            usuario_model.save()
+            nombre = usuario_model.nombres + ' ' + usuario_model.apellidos
+            usuarios = User.objects.all()
+            current_site = get_current_site(self.request)
+            for usuarioAdmin in usuarios:
+                if usuarioAdmin.is_superuser:
+                    url = self.request.build_absolute_uri(reverse('activar', args=[usuario_model.usuario_id]))
+                    emailAutorizacion(usuario_model.correo, nombre, usuarioAdmin.email, usuarioAdmin.first_name, url)
             pass
         elif rol == 'docente':
             # docente_model = Docente()
             # docente_model.usuario = usuario_model
             usuario_model.estado = False
+            usuario_model.autorizado = True
             usuario_model.save()
             # docente_model.save() el docente solo se guardara despues de que se acepte la autorizacion
             nombre = usuario_model.nombres + ' ' + usuario_model.apellidos

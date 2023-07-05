@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Group, User
-from modelo.models import Usuario, Docente
+from modelo.models import Usuario, Docente, Estudiante
 from django.contrib import messages
 from .forms import FormularioAutorizacion
 
@@ -28,24 +28,42 @@ def generarRol (request,usuario_id):
     if user.is_superuser:
         
         usuario = Usuario.objects.get(usuario_id=usuario_id)
+        
         formulario_autorizacion = FormularioAutorizacion(request.POST)
+
         if request.method == 'POST':
             if formulario_autorizacion.is_valid():
                 opcion_seleccionada = formulario_autorizacion.cleaned_data['seleccion']
                 if opcion_seleccionada == 'autorizar':
-                    docente_model = Docente()
-                    docente_model.usuario = usuario
-                    usuario.autorizado = True                           # el usuario es considerado un docente
-                    usuario.estado = True 
-                    usuario.save()
-                    docente_model.save()
-                    print('docente Guardado')
-                    return HttpResponseRedirect(reverse('homepage'))
+                    user = User.objects.get(email = usuario.correo)
+                    if usuario.autorizado:
+                        
+                        docente_model = Docente()
+                        docente_model.usuario = usuario
+                        usuario.autorizado = True                           # el usuario es considerado un docente
+                        usuario.estado = True 
+                        docente_grupo=Group.objects.get(name='docente')
+                        user.groups.add(docente_grupo)
+                        user.save()
+                        usuario.save()
+                        
+                        docente_model.save()
+                        print('docente Guardado')
+                        
+                    else:
+                        estudiante_model = Estudiante()                     # el usuario es considerado un estudiante
+                        estudiante_model.usuario = usuario
+                        usuario.estado = True 
+                        usuario.save()
+                        estudiante_grupo=Group.objects.get(name='estudiante')
+                        user.groups.add(estudiante_grupo)
+                        user.save()
+                        estudiante_model.save()
+                        print('estudainte Guardado')
+                        
                 else:
-                    usuario.autorizado = False                              # el usuario es considerado un alumno
-                    usuario.estado = True
-                    usuario.save()
-                    print('docente no guardado')
-        print("#################aqui#############################")
+                    usuario.delete()
+                    print('usuario descartado')
+                return HttpResponseRedirect(reverse('homepage'))
         return render(request, 'autorizar/autorizar.html',locals()) 
     return render(request, 'login/forbidden.html') 

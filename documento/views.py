@@ -1,7 +1,7 @@
 import os
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
-from modelo.models import Documento, Usuario, GestionDocumentos, Estudiante, Docente
+from modelo.models import Documento, Usuario, GestionDocumentos, Estudiante, Docente, Resultado
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.urls import reverse
@@ -31,12 +31,13 @@ def subir_archivo(request):
             # documento.usuario = usuario
             documento.archivo = archivo
             documento.visible = True
+            gestion = GestionDocumentos()
 
-            if Docente.objects.filter(usuario = usuario).exists():
+            if user.groups.filter(name = "docente").exists() or user.groups.filter(name = "admin").exists():
                 docente = Docente.objects.get(usuario = usuario)
                 ########################################
-                if GestionDocumentos.objects.filter(docente = docente.docente_id).exists():
-                    listaGestion = GestionDocumentos.objects.filter(docente = docente.docente_id).last()
+                if GestionDocumentos.objects.filter(docente = docente).exists():
+                    listaGestion = GestionDocumentos.objects.filter(docente = docente).last()
                     
                     ultimo_documento = listaGestion.documento
                     ultimo_documento.visible = False
@@ -44,23 +45,44 @@ def subir_archivo(request):
                 #######################################
                 documento.save()
                 
-                gestion = GestionDocumentos()
+                
                 gestion.docente = docente
                 gestion.documento = documento
                 gestion.save()
 
-            elif Estudiante.objects.filter(usuario = usuario.usuario_id).exists():
-                estudiante = Estudiante.objects.get(usuario = usuario.usuario_id)
+            elif user.groups.filter(name = "estudiante").exists():
+                estudiante = Estudiante.objects.get(usuario = usuario)
+                if GestionDocumentos.objects.filter(estudiante = estudiante).exists():
+                    listaGestion = GestionDocumentos.objects.filter(estudiante = estudiante).last()
+                    if listaGestion.docente is not None:
+                        ultimo_documento = listaGestion.documento
+                        ultimo_documento.visible = False
+                        ultimo_documento.save()
+                    else:
+                        print("aqui ",listaGestion.gestion_id)
+                        try:
+                            resultado = Resultado.objects.get(management = listaGestion)
+                            resultado.delete()
+                        except Resultado.DoesNotExist:
+                            print("no se encontro un resultado")
+                        last_documento = listaGestion.documento
+                        last_documento.delete()
+                        
+                        listaGestion.delete()
+                
                 documento.save()
-                #envio a una view de gestionDocumentos para la asignacion al docente.
-                response_data = {'redirect_url': reverse('gestion_estudiante', args=[estudiante.estudiante_id, documento.documento_id])}
-                return JsonResponse(response_data)
+                gestion.estudiante = estudiante
+                gestion.documento = documento
+                gestion.save()
+
+                # response_data = {'redirect_url': reverse('gestion_estudiante', args=[documento.documento_id])} #Cambio quitarlo para pasarlo a un resultado, ademas ligarlo a gestion en vez de a solo documento
+                # return JsonResponse(response_data)
                 # return HttpResponseRedirect(reverse('gestion_estudiante', args=[estudiante.estudiante_id, documento.documento_id]))
             else:
                 return HttpResponseRedirect(reverse('no_activo'))
 
             # return redirect(visualizar_archivo,documento.documento_id)
-            response_data = {'redirect_url': reverse('visualizar_archivo', args=[documento.documento_id])}
+            response_data = {'redirect_url': reverse('visualizar_archivo', args=[gestion.gestion_id])}
             return JsonResponse(response_data)
             # else:
             #     return render(request,'documento/subir_archivo.html',{'mensaje':'Usuario no encontrado'}) #ojo registrar el usuario, en el caso de un registro erroneo
@@ -69,13 +91,14 @@ def subir_archivo(request):
         return render(request, 'homepage.html')
 #Cambio por realizar en la logica, antes de almacenar el archivo, deberia ser posible subir el archivo solo para ver una visualizacion del documento a analizar
 #una vez seleccionado para analizar el documento debe guardarse, se puede mandar a anlizar o cancelar el documento que se subio.
+#hacerlo con cronjob, si es posible
 @login_required
 def visualizar_archivo(request, gestion_id):
     user = request.user
     gestion = GestionDocumentos.objects.get(gestion_id = gestion_id)
     # documento = Documento.objects.get(documento_id = gestion.documento_id)
     documento = gestion.documento #ojo
-    if request.method == 'GET': #post bajar toda la logica fuera del return. 7-
+    if request.method == 'GET': #Cambio post bajar toda la logica fuera del return. 7-
             
         context = {
         'gestion' : gestion,

@@ -18,7 +18,7 @@
     <!-- cambio: agrega un parametro del porcentaje de plagio encontrado, si aun no se lo obtiene, saldra analisando -->
     
     <table class="table table-hover">
-        {% if cond%}
+        {% if cond %}
         <thead class="thead-light">
             <tr>
                 <th>Numero</th>
@@ -33,10 +33,15 @@
             {% for resultado in listaResultado%}
             <tr>
                 <td>{{ forloop.counter }}</td>
+                <td>{{resultado.management.documento.get_nombre_archivo }}</td>  <!-- ojo -->
                 <td>{{resultado.management.titulo}}</td>
                 <td>{{resultado.management.comentario}}</td>
-                <td>{{resultado.management.documento.get_nombre_archivo }}</td>  <!-- ojo -->
+                {% if resultado.management.estudiante is not none %}
                 <td>{{resultado.management.estudiante.usuario.nombres}} {{resultado.management.estudiante.usuario.apellidos}}</td>
+                {% else %}
+                <td>{{resultado.management.docente.usuario.nombres}} {{resultado.management.docente.usuario.apellidos}}</td>
+                {% endif %}
+                
                 <td >
                     <a class="btn btn-info"  href="{% url 'revision' resultado.resultado_id  %}"
                         role="button">Revision</a>

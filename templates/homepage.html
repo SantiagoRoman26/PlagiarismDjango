@@ -47,7 +47,10 @@
   }
 </style>
 
- nuevo
+{% if user.is_authenticated %}
+<h1> Detector</h1>
+<h5 style="text-align: center;">Bienvenido {{ user.username }}!</h5>
+{% endif %}
 
 <div class="container">
 
@@ -55,15 +58,15 @@
   <div class="d-flex flex-wrap flex-row-reverse">
     <div class="card card_hotel d-flex flex-column justify-content-between">
       <div class="car-body">
-        <h5 class="card-title">Usuarios</h5>
-        <h6 class="card-subtitle">Gestion usuarios</h6>
+        <h5 class="card-title">Resultados</h5>
+        <h6 class="card-subtitle">Revisar Resultados</h6>
 
-        <p class="card-text">Ver, editar y eliminar los usuarios creados</p>
+        <p class="card-text">Ver los resultados generados</p>
       </div>
 
       <div>
 
-        <a href="/usuario" class="buttonClass1" >Clientes</a>
+        <a href="/plagio" class="buttonClass1" >Resultados</a>
       </div>
     </div>
 
@@ -73,7 +76,7 @@
         <h5 class="card-title">Documentos</h5>
         <h6 class="card-subtitle">Gestion de documentos</h6>
 
-        <p class="card-text">Logica de subida de documentos</p>
+        <p class="card-text">Subir un nuevo documento</p>
       </div>
 
       <div>
