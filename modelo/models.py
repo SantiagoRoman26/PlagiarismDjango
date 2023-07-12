@@ -59,6 +59,7 @@ class Resultado(models.Model):
     resultado_id = models.AutoField(primary_key = True)
     archivo= models.FileField(upload_to='resultados/')
     fecha_subida = models.DateTimeField(auto_now_add=True)
+    ejecutando = models.BooleanField(default = False)
     management = models.ForeignKey(GestionDocumentos, on_delete=models.CASCADE)
     estado = models.BooleanField(default = False) # el unico documento con estado true sera el ultimo documento subido por el usuario. o solo un documento para su analisis, para seguridad
     

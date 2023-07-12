@@ -39,13 +39,17 @@ def detectar(request, gestion_id):
         ruta_documento_nuevo = os.path.join(file_path, nombre_documento)
         shutil.copy2(ruta_documento_original, ruta_documento_nuevo)
 
+        resultado = Resultado()
+        resultado.documento = documento
+        resultado.management = gestion
+        resultado.ejecutando = True
+        resultado.save()
+
         documento_generado, nombre= main.main()
         with open(documento_generado, 'rb') as archivo:
             archivo_django = ContentFile(archivo.read(), name=nombre)
 
-        resultado = Resultado()
-        resultado.documento = documento
-        resultado.management = gestion
+        resultado.ejecutando = False
         resultado.archivo.save(nombre, archivo_django)
         resultado.estado = True
         resultado.save()
