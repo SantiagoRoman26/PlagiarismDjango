@@ -79,7 +79,10 @@ def emailAutorizacion(User_mail, User_nombre, Admin_Email, Admin_nombre, url):
 
 
 
-    # Wizard para registrarse y solicitar un rol
+
+
+# Wizard para registrarse y solicitar un rol
+
 TEMPLATES = {
         "registro": 'login/registrar.html',
         "rol": 'autorizar/solicitarRol.html',
@@ -147,7 +150,9 @@ class RegistrarWizardView(SessionWizardView):
             estudiante_model = Estudiante()
             estudiante_model.usuario = usuario_model
             estudiante_model.save()
-        return HttpResponseRedirect(reverse('autenticar'))
+        
+        return HttpResponseRedirect(reverse('completado'))
+        # return HttpResponseRedirect(reverse('autenticar'))
     
 
 # def registrar (request):
@@ -216,4 +221,6 @@ def forbidden (request):
 
 def desactivado (request):
     return render(request, 'login/deactive.html')  
+def completado (request):
+    return render(request, 'login/registro_completado.html')  
 

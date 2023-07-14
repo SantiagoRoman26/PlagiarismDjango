@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group, User
 from modelo.models import Usuario, Docente, Estudiante
 from django.contrib import messages
 from .forms import FormularioAutorizacion
+from correo.views import emailRegistroCompletado
 
 # #app autorizar 
 # def solicitarRol (request, usuario_id):
@@ -21,6 +22,7 @@ from .forms import FormularioAutorizacion
 #             return render(request, 'login/deactive.html')                                             #pagina de muestra de errores
 #         return HttpResponseRedirect(reverse('autenticar'))
 #     return render(request, 'autorizar/solicitarRol.html') 
+
 
 @login_required
 def generarRol (request,usuario_id):
@@ -50,6 +52,7 @@ def generarRol (request,usuario_id):
                         docente_model.save()
                         print('docente Guardado')
                         
+                        
                     else:
                         estudiante_model = Estudiante()                     # el usuario es considerado un estudiante
                         estudiante_model.usuario = usuario
@@ -60,7 +63,9 @@ def generarRol (request,usuario_id):
                         user.save()
                         estudiante_model.save()
                         print('estudainte Guardado')
-                        
+                    nombre = usuario.nombres +" " + usuario.apellidos
+                    url = request.build_absolute_uri(reverse('autenticar'))
+                    emailRegistroCompletado(nombre,usuario.correo, )
                 else:
                     usuario.delete()
                     print('usuario descartado')

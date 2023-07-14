@@ -35,8 +35,9 @@ def gestionEstudiante (request,gestion_id):
                         listaGestion.save()
                         documento.visible = True
                         documento.save()
-
-                        return render(request, 'gestion/exito.html',locals())
+                        #'detectar' gestion.gestion_id
+                        #return render(request, 'gestion/exito.html',locals())
+                        return HttpResponseRedirect(reverse('detectar', args=[listaGestion.gestion_id]))
                     else:
                         return HttpResponseRedirect(reverse('homepage'))
                 else:
