@@ -7,4 +7,5 @@ urlpatterns = [
     path('logout', views.desautenticar, name="logout"),
     path('registro', views.RegistrarWizardView.as_view(), name="registrar"),
     path('cambioClave', views.passwordChange, name="passwordChange"),
+    path('completado', views.completado, name="completado"),
 ] 

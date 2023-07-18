@@ -9,7 +9,7 @@ from django.http import HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from .nlp.src.python import main
-
+from correo.views import emailCompartir
  
 
 # Esta logica solo funciona en la fase de pruebas, en produccion se debe tomar el documento desde la ruta base, en donde se va a cambiar el config para ingresar al
@@ -108,3 +108,43 @@ def revision(request,resultado_id):
         gestion = GestionDocumentos.objects.get(resultado = resultado)
         return render(request,'plagio/Success.html',locals())
     return
+
+@login_required
+def eliminarResultado(request, resultado_id):
+    user = request.user
+    if user.groups.filter(name = "docente").exists() or user.groups.filter(name = "admin").exists():
+        try:
+            resultado = Resultado.objects.get(resultado_id = resultado_id)
+            gestion = resultado.management
+            resultado.delete()
+            gestion.delete()
+            return redirect(index)
+        except Exception  as e:
+            print("error")
+            return redirect(index)
+            
+    else:
+        return render(request, 'login/forbidden.html', locals())
+
+@login_required
+def compartirDocumento(request, resultado_id):
+    user = request.user
+    usuario = Usuario.objects.get(correo=user.email)
+    nombres = usuario.nombres +" "+ usuario.apellidos
+    resultado = Resultado.objects.get(resultado_id = resultado_id)
+    if request.method == 'POST':
+        # Obtener los correos electrónicos ingresados en el formulario
+        correos = request.POST.getlist('correo')
+
+        # Obtener el comentario ingresado en el formulario
+        comentario = request.POST.get('comentario', '')
+
+        
+        archivo_adjunto = resultado.archivo
+
+        # Por ejemplo, enviar correos electrónicos a las direcciones ingresadas
+        emailCompartir(correos, comentario, nombres, archivo_adjunto)
+        return redirect(index)
+    return render(request, 'plagio/compartir.html',locals())
+    
+

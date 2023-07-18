@@ -1,5 +1,5 @@
 {% extends 'master.html' %}
-
+{% load auth_extras %}
 {% block contenido %}
 <style>
   .buttonClass1 {
@@ -84,7 +84,7 @@
       </div>
     </div>
 
-
+    {% if request.user|has_group:"admin" %}
     <div class="card card_hotel d-flex flex-column justify-content-between">
       <div class="car-body">
         <h5 class="card-title">Admin</h5>
@@ -98,9 +98,26 @@
       </div>
     </div>
 
+    <div class="card card_hotel d-flex flex-column justify-content-between">
+      <div class="car-body">
+        <h5 class="card-title">Usuarios</h5>
+        <h6 class="card-subtitle">Gestionar usuarios</h6>
+
+        <p class="card-text">Gestionar los usuarios.</p>
+      </div>
+
+      <div>
+        <a href="/usuario" class="buttonClass1">Usuario</a>
+      </div>
+    </div>
+    {% endif %}
 
   </div>
 
+  <p id="mensaje"></p>
+
+  <!-- Botón para enviar el formulario y mostrar el mensaje -->
+  
 </div>
 
 {% endblock %}

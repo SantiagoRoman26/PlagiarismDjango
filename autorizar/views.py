@@ -65,7 +65,7 @@ def generarRol (request,usuario_id):
                         print('estudainte Guardado')
                     nombre = usuario.nombres +" " + usuario.apellidos
                     url = request.build_absolute_uri(reverse('autenticar'))
-                    emailRegistroCompletado(nombre,usuario.correo, )
+                    emailRegistroCompletado(usuario.correo,nombre, url)
                 else:
                     usuario.delete()
                     print('usuario descartado')

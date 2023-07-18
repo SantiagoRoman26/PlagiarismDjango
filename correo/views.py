@@ -1,5 +1,5 @@
 from django.shortcuts import render
-
+import os
 from django.template.loader import get_template
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
@@ -15,7 +15,7 @@ def emailAutorizacion(User_mail, User_nombre, Admin_Email, Admin_nombre, url):
     template = get_template('correo/Autorizacion.html')
     content = template.render(context)
     email = EmailMultiAlternatives(
-        'Registro de docente',
+        'Registro Completado y autorizado',
         'Nuevo Registro',
         settings.EMAIL_HOST_USER,
         [Admin_Email] #todos los destinatarios a quien enviarlos
@@ -44,18 +44,26 @@ def emailRegistroCompletado(User_mail, User_nombre, url):
     email.send()
     print ('Correo Enviado!')
 
-def emailCompartir(mail):
-    context = { 'mail' : mail }
+def emailCompartir(correos, comentario, User_nombre, archivo_adjunto):
+    context = { 
+        'comentario' : comentario,
+        'user_nombre' : User_nombre,
+                }
     template = get_template('correo/Compartir.html')
     content = template.render(context)
     email = EmailMultiAlternatives(
-        'Un correo de prueba',
-        'Descripcion del correo',
+        'Resultado compartido',
+        'Se le ha compartido el siguiente resultado de analisis de plagio',
         settings.EMAIL_HOST_USER,
-        [mail] #todos los destinatarios a quien enviarlos
+        correos #todos los destinatarios a quien enviarlos
         #cc= [] #envio de una copia
     )
     email.attach_alternative(content, 'text/html')
+    if archivo_adjunto:
+        file_path = archivo_adjunto.path
+        file_name = os.path.basename(file_path)
+        email.attach(file_name, archivo_adjunto.read())
+
     email.send()
 
 def emailResultado(mail):
