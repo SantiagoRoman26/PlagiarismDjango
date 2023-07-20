@@ -8,12 +8,13 @@ from nltk.corpus import stopwords
 from .funciones_principales import  obtener_plagio_de_otros_tics, obtener_plagio_de_internet
 from .helper import *
 from .procesamiento_de_archivos import obtener_archivos, guardar_resultado, limpieza, \
-    limpiar_archivos_referencia, excluida, correctamente_citada
+    limpiar_archivos_referencia, excluida, correctamente_citada,obtener_archivo_Test
 from .tema_del_texto import obtener_tema_del_texto
 from .redes_neuronales import generar_modelo_entrenado
 
 
-def main():
+# def main():
+def main(directorio_archivo):
     log.info("Iniciando detector de plagio ...")
     tiempo_inicial = time.time()
     # Obtener la ruta absoluta del archivo config.yml
@@ -29,7 +30,8 @@ def main():
     if not archivos_referencia:
         log.warning("No se encontraron archivos en la carpeta referencia, solo se buscara plagio de Internet")
     log.warning("INFO | Fin de generar los documentos de la carpeta.")
-    archivos_test = obtener_archivos(os.path.join(base_dir,config["path_archivo_test"]))
+    # archivos_test = obtener_archivos(os.path.join(base_dir,config["path_archivo_test"]))
+    archivos_test = obtener_archivo_Test(directorio_archivo)
     if archivos_test:
         archivo_test = archivos_test[0]
         nombre_archivo = archivo_test.nombre + archivo_test.extension
@@ -53,10 +55,10 @@ def main():
         
         hilos_red_nuronal = list() #nuevo 
 
-        hilo_plagio_de_internet = threading.Thread(target=obtener_plagio_de_internet,
-                                                  args=(texto_archivo_test_sin_oraciones_excluidas, sw, int(config["cantidad_de_links"]), bool(config["buscar_en_pdfs"]),))
-        hilos_principales.append(hilo_plagio_de_internet)
-        hilo_plagio_de_internet.start()
+        # hilo_plagio_de_internet = threading.Thread(target=obtener_plagio_de_internet,
+        #                                           args=(texto_archivo_test_sin_oraciones_excluidas, sw, int(config["cantidad_de_links"]), bool(config["buscar_en_pdfs"]),))
+        # hilos_principales.append(hilo_plagio_de_internet)
+        # hilo_plagio_de_internet.start()
 
         for index, thread in enumerate(hilos_limpieza_archivos_referencia):
             thread.join()
@@ -114,14 +116,29 @@ def main():
         porcentaje_de_plagio = int((len(plagio) * 100) / len(texto_archivo_test_limpio))
         log.warning(f"num oraciones: {len(texto_archivo_test_limpio)}")
         documento_generado,nombre =guardar_resultado(nombre_archivo, topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, os.path.join(base_dir,config["path_resultado"]), os.path.join(base_dir,config["path_archivos_referencia"])) #aqui
+        informacion ={
+            "nombre_archivo":nombre_archivo, 
+            "topico_con_mas_score":topico_con_mas_score, 
+            "tiempo_que_tardo":tiempo_que_tardo, 
+            "porcentaje_de_plagio":porcentaje_de_plagio, 
+            "path_resultado":os.path.join(base_dir,config["path_resultado"]), 
+            "path_referencia":os.path.join(base_dir,config["path_archivos_referencia"]), 
+            "total_oraciones":len(texto_archivo_test_limpio)
+            }
+        
         log.info("El detector de plagio finalizo correctamente!")
         log.warning(documento_generado)
         log.info(f"Porcentaje de plagio: {porcentaje_de_plagio} %")
         log.info(f'Resultado guardado en: {os.path.abspath(os.path.join(base_dir,config["path_resultado"]))}\\Plagio {str(str(nombre_archivo).split(".")[0])}.docx')
-        return documento_generado, nombre
+        return documento_generado, nombre, plagio, informacion
     else:
         log.error("No se encontro ningun archivo para verificar plagio")
         log.error("Cerrando detector de plagio...")
+
+def regenerarResultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia, nombre_documento_anterior):
+    os.remove(nombre_documento_anterior)
+    documento_generado,nombre = guardar_resultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia)
+    return documento_generado, nombre
 
 
 if __name__ == '__main__':

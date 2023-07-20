@@ -30,14 +30,18 @@
             </thead>
             <tbody>
                 {% for usuarios in listaUsuarios%}
+                {% if not usuarios.estado %}
                 <tr>
                     <td>{{usuarios.usuario_id}}</td>
-                    <td>{{usuarios.usuario.nombres}}</td>
-                    <td>{{usuarios.usuario.apellidos}}</td>
-                    <td>{{usuarios.usuario.correo}}</td>
+                    <td>{{usuarios.nombres}}</td>
+                    <td>{{usuarios.apellidos}}</td>
+                    <td>{{usuarios.correo}}</td>
+                    <td>
                     <a class="btn btn-info"  href="{% url 'activar' usuarios.usuario_id %}"
                                 role="button">Autorizar.</a>
+                    </td>
                 </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>

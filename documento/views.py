@@ -82,6 +82,14 @@ def subir_archivo(request):
                 return HttpResponseRedirect(reverse('no_activo'))
 
             # return redirect(visualizar_archivo,documento.documento_id)
+            directorio_archivo = os.path.dirname(documento.archivo.path)
+            print("----------------------------------------")
+            ruta_completa = documento.archivo.path
+            print ("directorio_archivo completo=",ruta_completa)
+            directorio, nombre_archivo = os.path.split(ruta_completa)
+            print("Directorio:", directorio)
+            print("Nombre del archivo:", nombre_archivo)
+            print("----------------------------------------")
             response_data = {'redirect_url': reverse('visualizar_archivo', args=[gestion.gestion_id])}
             return JsonResponse(response_data)
             # else:

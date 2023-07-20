@@ -21,8 +21,13 @@ class ArchivoTxt:
 
 def obtener_archivos(nombre_directorio):
     archivos = os.listdir(nombre_directorio)
+    print("nombre_directorio =",nombre_directorio)
     print(archivos)
     return [convertir_archivo_a_txt(nombre_directorio, archivo) for archivo in archivos]
+
+def obtener_archivo_Test(ruta_completa):
+    directorio, nombre_archivo = os.path.split(ruta_completa)
+    return [convertir_archivo_a_txt(directorio+"/", nombre_archivo)]
 
 #cambio
 def convertir_archivo_a_txt(nombre_directorio, archivo):
@@ -119,6 +124,7 @@ def add_hyperlink(paragraph, text, url):
 
 
 def guardar_resultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia): #aqui
+    # Crear documento Word con los resultados y guardarlo como un nuevo archivo
     document = Document()
 
     h = document.add_heading(f'Análisis de plagio sobre:\n', 0)
@@ -160,8 +166,10 @@ def guardar_resultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_
     # Guardar el documento Word
     nombre_archivo_plagio = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.docx'
     document.save(nombre_archivo_plagio)
+    print("nombre_archivo_plagio",nombre_archivo_plagio)
     # Convertir el documento Word a PDF
     nombre_archivo_pdf = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
     convert(nombre_archivo_plagio, nombre_archivo_pdf)
+    os.remove(nombre_archivo_plagio)
     nombre ='Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
     return nombre_archivo_pdf, nombre

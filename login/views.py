@@ -115,13 +115,12 @@ class RegistrarWizardView(SessionWizardView):
         usuario_model.apellidos = apellidos
         usuario_model.nombres = nombres
         usuario_model.correo = correo
+        usuario_model.estado = False
         usuario_model.save()
 
         # Procesar formulario de rol
         rol = formulario_rol_data['rol']
         if rol == 'estudiante':
-
-            usuario_model.estado = False
             usuario_model.save()
             nombre = usuario_model.nombres + ' ' + usuario_model.apellidos
             usuarios = User.objects.all()
@@ -131,13 +130,10 @@ class RegistrarWizardView(SessionWizardView):
                     url = self.request.build_absolute_uri(reverse('activar', args=[usuario_model.usuario_id]))
                     emailAutorizacion(usuario_model.correo, nombre, usuarioAdmin.email, usuarioAdmin.first_name, url)
             pass
+
         elif rol == 'docente':
-            # docente_model = Docente()
-            # docente_model.usuario = usuario_model
-            usuario_model.estado = False
             usuario_model.autorizado = True
             usuario_model.save()
-            # docente_model.save() el docente solo se guardara despues de que se acepte la autorizacion
             nombre = usuario_model.nombres + ' ' + usuario_model.apellidos
             usuarios = User.objects.all()
             current_site = get_current_site(self.request)
@@ -146,6 +142,7 @@ class RegistrarWizardView(SessionWizardView):
                     url = self.request.build_absolute_uri(reverse('activar', args=[usuario_model.usuario_id]))
                     emailAutorizacion(usuario_model.correo, nombre, usuarioAdmin.email, usuarioAdmin.first_name, url)
             pass
+
         else:
             estudiante_model = Estudiante()
             estudiante_model.usuario = usuario_model

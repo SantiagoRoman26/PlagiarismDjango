@@ -1,6 +1,4 @@
-import os
-import glob
-import shutil
+import json
 from django.shortcuts import render, redirect
 from modelo.models import Documento, Usuario, Resultado, GestionDocumentos, Docente, Estudiante
 from django.contrib.auth.decorators import login_required
@@ -8,7 +6,7 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
-from .nlp.src.python import main
+from nlp.src.python import main
 from correo.views import emailCompartir
  
 
@@ -23,35 +21,23 @@ def detectar(request, gestion_id):
         gestion = GestionDocumentos.objects.get(gestion_id = gestion_id)
         # documento = Documento.objects.get(documento_id = gestion.documento_id) 
         documento = gestion.documento #ojo
-        ruta=os.getcwd()
-        new = ruta.replace('\\','/')
-        file_path= new +'/plagio/nlp/Test'
-
-        
-
-        ruta_documento_original = documento.archivo.path
-        print(os.path)
-        archivos_existentes = glob.glob(os.path.join(file_path, '*'))
-        for archivo in archivos_existentes:
-            os.remove(archivo)
-        #Cambio, ya no agregar el documento a la carpeta Test, en cambio enviarla desde la ruta original, cambiar el archivo original 
-        nombre_documento = os.path.basename(ruta_documento_original)
-        ruta_documento_nuevo = os.path.join(file_path, nombre_documento)
-        shutil.copy2(ruta_documento_original, ruta_documento_nuevo)
+        directorio_archivo = documento.archivo.path
 
         resultado = Resultado()
-        resultado.documento = documento
         resultado.management = gestion
         resultado.ejecutando = True
         resultado.save()
 
-        documento_generado, nombre= main.main()
+        # documento_generado, nombre= main.main()
+        documento_generado, nombre, plagio, informacion = main.main(directorio_archivo)
         with open(documento_generado, 'rb') as archivo:
             archivo_django = ContentFile(archivo.read(), name=nombre)
 
         resultado.ejecutando = False
         resultado.archivo.save(nombre, archivo_django)
         resultado.estado = True
+        resultado.plagio = plagio
+        resultado.informacion = informacion
         resultado.save()
 
         return HttpResponseRedirect(reverse('revision', args=[resultado.resultado_id]))
@@ -63,7 +49,7 @@ def index(request):
     user = request.user
     usuario = Usuario.objects.get(correo=user.email)
     if usuario.estado:
-        if user.groups.filter(name = "docente").exists():
+        if user.groups.filter(name = "docente").exists() or user.groups.filter(name = "admin").exists():
             cond = False
             docente = Docente.objects.get(usuario = usuario)
             listaGestion = GestionDocumentos.objects.filter(docente = docente)
@@ -147,4 +133,74 @@ def compartirDocumento(request, resultado_id):
         return redirect(index)
     return render(request, 'plagio/compartir.html',locals())
     
+@login_required
+def detalleDocumento(request, resultado_id):
+    user = request.user
+    resultado = Resultado.objects.get(resultado_id = resultado_id)
+    plagio = resultado.plagio
+    if user.groups.filter(name = "docente").exists() or user.groups.filter(name = "admin").exists():
+        listaOracion=[]
+        listaPlagio=[]
+        listaPorcentaje=[]
+        listaUrl=[]
+        listaUbicacion=[]
+        for oracion, plagio, porcentaje, url, ubicacion in plagio:
+            listaOracion.append(oracion)
+            listaPlagio.append(plagio)
+            listaPorcentaje.append(porcentaje)
+            listaUrl.append(url)
+            listaUbicacion.append(ubicacion)
+        
+        matriz = []
+        print("plagio",len(listaOracion))
+        for i in range(len(listaOracion)):
+            fila = [listaOracion[i], listaPlagio[i], listaPorcentaje[i], listaUrl[i],listaUbicacion[i]]
+            matriz.append(fila)
+        num_oraciones = resultado.informacion['total_oraciones']
+        context = {
+            'matriz': matriz,
+            'resultado': resultado,
+            'num_oraciones' : num_oraciones,
+        }
+        
+        return render(request, 'plagio/matrizDetalle.html', context)
+    else:
+        return render(request, 'login/forbidden.html', locals())
 
+@login_required
+def eliminar_filas(request, resultado_id):
+    if request.method == 'POST':
+        resultado = Resultado.objects.get(resultado_id=resultado_id)
+        plagio = resultado.plagio
+
+        # Obtener las filas eliminadas desde el formulario
+        filas_eliminadas = request.POST.getlist('filas_eliminadas')
+        filas_eliminadas = json.loads(filas_eliminadas[0])
+        print("filas_eliminadas",filas_eliminadas)
+
+        # Eliminar las filas seleccionadas de la matriz plagio
+        plagio_actualizado = [fila for i, fila in enumerate(plagio) if i not in map(int, filas_eliminadas)]
+        print("plagio actualizado cantidad",len(plagio_actualizado))
+        # Actualizar el campo plagio del objeto resultado
+        
+
+        informacion = resultado.informacion
+        porcentaje_de_plagio = (len(plagio_actualizado) / resultado.informacion['total_oraciones']) * 100
+        print("porcentaje_de_plagio = ", porcentaje_de_plagio)
+        informacion['porcentaje_de_plagio'] = porcentaje_de_plagio
+        print("resultado.archivo.path = ",resultado.archivo.path)
+        documento_generado, nombre= main.regenerarResultado(informacion['nombre_archivo'],informacion['topico_con_mas_score'],plagio_actualizado,informacion['tiempo_que_tardo'],informacion['porcentaje_de_plagio'],informacion['path_resultado'],informacion['path_referencia'],resultado.archivo.path)
+        resultado.plagio = plagio_actualizado
+        with open(documento_generado, 'rb') as archivo:
+            archivo_django = ContentFile(archivo.read(), name=nombre)
+
+        resultado.archivo.save(nombre, archivo_django)
+        resultado.save()
+
+        # Devolver una respuesta JSON exitosa
+        return redirect('detalle_documento', resultado_id)
+
+    # Redireccionar de vuelta a la página de la tabla en caso de que no sea una solicitud POST
+    return redirect('detalle_documento', resultado_id)
+
+#por realizar: Se debe enviar denuevo el resultado.plagio al script de python para actualizar el documento, adicionalmente obtener las oraciones en total del resultado

@@ -22,6 +22,8 @@
         <iframe src="{{ resultado.archivo.url }}" width="100%" height="500px"></iframe>
         <a class="btn btn-info"  href="{% url 'compartir_documento' resultado.resultado_id %}"
                                 role="button">Compartir.</a>
+        <a class="btn btn-info"  href="{% url 'detalle_documento' resultado.resultado_id %}"
+        role="button">Editar Detalles.</a>
         {% else %}
         <h1>Documento no disponible</h1>
         <p>No se puede mostrar una previsualización del documento.</p>

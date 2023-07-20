@@ -47,7 +47,7 @@ def index(request):
 
 
 @login_required
-def autorizaciones(request, usuario_id):
+def autorizaciones(request):
     user = request.user
     if user.groups.filter(name = "admin").exists():
         listaUsuarios = Usuario.objects.filter(estado = False)

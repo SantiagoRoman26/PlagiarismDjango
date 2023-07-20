@@ -62,7 +62,9 @@ class Resultado(models.Model):
     ejecutando = models.BooleanField(default = False)
     management = models.ForeignKey(GestionDocumentos, on_delete=models.CASCADE)
     estado = models.BooleanField(default = False) # el unico documento con estado true sera el ultimo documento subido por el usuario. o solo un documento para su analisis, para seguridad
-    
+    plagio = models.JSONField(default=list)
+    informacion = models.JSONField(default=dict)
+
 
     def __int__(self):   
         return self.resultado_id

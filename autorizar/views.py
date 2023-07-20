@@ -28,9 +28,7 @@ from correo.views import emailRegistroCompletado
 def generarRol (request,usuario_id):
     user = request.user
     if user.is_superuser:
-        
         usuario = Usuario.objects.get(usuario_id=usuario_id)
-        
         formulario_autorizacion = FormularioAutorizacion(request.POST)
 
         if request.method == 'POST':
@@ -51,8 +49,6 @@ def generarRol (request,usuario_id):
                         
                         docente_model.save()
                         print('docente Guardado')
-                        
-                        
                     else:
                         estudiante_model = Estudiante()                     # el usuario es considerado un estudiante
                         estudiante_model.usuario = usuario

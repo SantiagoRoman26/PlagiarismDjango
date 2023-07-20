@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.index, name='resultados'),
     path('revision/<int:resultado_id>/', views.revision, name='revision'),
     path('eliminar/<int:resultado_id>/', views.eliminarResultado, name='eliminar_resultado'),
-    # path('compartir_documento/<int:documento_id>/', views.compartirDocumento, name='compartir_documento'),
+    path('eliminar_filas/<int:resultado_id>/', views.eliminar_filas, name='eliminar_filas'),
     path('compartir_documento/<int:resultado_id>/', views.compartirDocumento, name='compartir_documento'),
+    path('detalles/<int:resultado_id>/', views.detalleDocumento, name='detalle_documento'),
 ]
