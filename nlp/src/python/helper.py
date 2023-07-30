@@ -26,6 +26,12 @@ porcentajes_de_aparicion_otros_tics = []
 global porcentajes_de_aparicion_internet
 porcentajes_de_aparicion_internet = []
 
+global nombre_alumno
+nombre_alumno = []
+
+global titulo
+titulo = []
+
 global topico_con_mas_score
 topico_con_mas_score = []
 

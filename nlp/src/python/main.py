@@ -5,7 +5,7 @@ import threading
 import time
 import yaml
 from nltk.corpus import stopwords
-from .funciones_principales import  obtener_plagio_de_otros_tics, obtener_plagio_de_internet
+from .funciones_principales import obtener_nombre_alumno, obtener_plagio_de_otros_tics, obtener_plagio_de_internet, obtener_titulo
 from .helper import *
 from .procesamiento_de_archivos import obtener_archivos, guardar_resultado, limpieza, \
     limpiar_archivos_referencia, excluida, correctamente_citada,obtener_archivo_Test
@@ -37,6 +37,7 @@ def main(directorio_archivo):
         nombre_archivo = archivo_test.nombre + archivo_test.extension
         log.info("Analizando plagio en: " + nombre_archivo)
         texto_archivo_test_limpio = limpieza(archivo_test.texto)
+        obtener_titulo(archivo_test.texto)
         print(texto_archivo_test_limpio)
         #print(f"oraciones limpias: {texto_archivo_test_limpio}")
         texto_archivo_test_sin_oraciones_excluidas = [oracion for oracion in texto_archivo_test_limpio if not excluida(oracion,base_dir+'/')]
@@ -52,8 +53,14 @@ def main(directorio_archivo):
                 hilo_limpieza_archivos.start()
 
         hilos_principales = list()
+
+        hilo_nombre_alumno = threading.Thread(target=obtener_nombre_alumno, args=(texto_archivo_test_limpio, sw,))
+        hilos_principales.append(hilo_nombre_alumno)
+        hilo_nombre_alumno.start()
         
         hilos_red_nuronal = list() #nuevo 
+        
+        
 
         # hilo_plagio_de_internet = threading.Thread(target=obtener_plagio_de_internet,
         #                                           args=(texto_archivo_test_sin_oraciones_excluidas, sw, int(config["cantidad_de_links"]), bool(config["buscar_en_pdfs"]),))
@@ -105,6 +112,8 @@ def main(directorio_archivo):
                 if not correctamente_citada(url, texto_archivo_test_limpio):
                     plagio += [(oracion, posible_plagio, porcentaje, url, ubicacion)]
 
+        obtener_titulo(texto_archivo_test_limpio)
+
         tiempo_final = time.time()
         tiempo_que_tardo_str = str(datetime.timedelta(seconds=tiempo_final-tiempo_inicial)).split(":")
         if tiempo_que_tardo_str[1] == "00":
@@ -113,7 +122,15 @@ def main(directorio_archivo):
             tiempo_que_tardo = f"{tiempo_que_tardo_str[1]} minutos, {tiempo_que_tardo_str[2].split('.')[0]} segundos"
         log.info(f"Total de {len(plagio)} plagios encontrados en {tiempo_que_tardo}")
 
-        porcentaje_de_plagio = int((len(plagio) * 100) / len(texto_archivo_test_limpio))
+        # porcentaje_de_plagio = int((len(plagio) * 100) / len(texto_archivo_test_limpio))
+        porcentaje_de_plagio = 0
+        for oracion, plagios, porcentaje, url, ubicacion in plagio:
+            porcentaje_de_plagio += porcentaje
+        try:
+            porcentaje_de_plagio = (porcentaje_de_plagio / len(plagio)) *100
+        except ZeroDivisionError:
+            porcentaje_de_plagio = 0
+
         log.warning(f"num oraciones: {len(texto_archivo_test_limpio)}")
         documento_generado,nombre =guardar_resultado(nombre_archivo, topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, os.path.join(base_dir,config["path_resultado"]), os.path.join(base_dir,config["path_archivos_referencia"])) #aqui
         informacion ={
@@ -130,6 +147,7 @@ def main(directorio_archivo):
         log.warning(documento_generado)
         log.info(f"Porcentaje de plagio: {porcentaje_de_plagio} %")
         log.info(f'Resultado guardado en: {os.path.abspath(os.path.join(base_dir,config["path_resultado"]))}\\Plagio {str(str(nombre_archivo).split(".")[0])}.docx')
+        print ('nombre alumno ', nombre_alumno)
         return documento_generado, nombre, plagio, informacion
     else:
         log.error("No se encontro ningun archivo para verificar plagio")

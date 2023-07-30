@@ -62,11 +62,28 @@
         window.addEventListener('DOMContentLoaded', (event) => {
             // Calcular el porcentaje de plagio inicial
             const numFilas = document.querySelectorAll('tbody tr').length;
-            const porcentajePlagio = (numFilas / numOraciones) * 100;
+            const porcentajePlagio = calcularPorcentajePlagioPromedio(numFilas);
 
             // Actualizar el texto del elemento con el porcentaje de plagio inicial
-            document.getElementById('porcentaje-plagio').textContent = `Porcentaje de plagio: ${porcentajePlagio}%`;
+            document.getElementById('porcentaje-plagio').textContent = `Porcentaje de plagio promedio: ${porcentajePlagio.toFixed(2)}%`;
         });
+
+        function calcularPorcentajePlagioPromedio(numFilas) {
+            let totalPlagio = 0;
+
+            // Calcular la suma de los porcentajes de plagio de las filas visibles
+            const filasVisibles = document.querySelectorAll('tbody tr:not(.fila-eliminada)');
+            filasVisibles.forEach((fila) => {
+                const porcentajePlagioFila = parseFloat(fila.children[2].textContent); // Obtiene el valor de Porcentaje de plagio (tercer <td>)
+                totalPlagio += porcentajePlagioFila;
+            });
+
+            // Calcular el promedio
+            const numFilasVisibles = filasVisibles.length;
+            const porcentajePromedioPlagio = (totalPlagio / numFilasVisibles)*100;
+
+            return porcentajePromedioPlagio;
+        }
 
         function confirmarCambios() {
             
@@ -102,7 +119,7 @@
             
             // Calcular el porcentaje de plagio inicial
             const numFilas = document.querySelectorAll('tbody tr').length;
-            const porcentajePlagio = (numFilas / numOraciones) * 100;
+            const porcentajePlagio = calcularPorcentajePlagioPromedio(numFilas);
 
             // Actualizar el texto del elemento con el porcentaje de plagio inicial
             document.getElementById('porcentaje-plagio').textContent = `Porcentaje de plagio: ${porcentajePlagio}%`;
@@ -121,15 +138,21 @@
             filasEliminadas.push(filaIndex);
             console.log('filasEliminadas', filasEliminadas);
 
-            // Calcular el nuevo porcentaje de plagio
-            numFilas = document.querySelectorAll('tbody tr').length;
-            numFilas = numFilas - filasEliminadas.length
-            console.warn("filas Restantes: ",numFilas)
-            const porcentajePlagio = (numFilas / numOraciones ) * 100;
+             // Calcular el nuevo porcentaje de plagio promedio
+            const filasVisibles = document.querySelectorAll('tbody tr:not(.fila-eliminada)');
+            let totalPlagio = 0;
 
-            // Actualizar el texto del elemento con el nuevo porcentaje de plagio
-            document.getElementById('porcentaje-plagio').textContent = `Porcentaje de plagio: ${porcentajePlagio}%`;
-    
+            filasVisibles.forEach((fila) => {
+                const porcentajePlagioFila = parseFloat(fila.children[2].textContent); // Obtiene el valor de Porcentaje de plagio (tercer <td>)
+                totalPlagio += porcentajePlagioFila;
+            });
+
+            const numFilasVisibles = filasVisibles.length;
+            const porcentajePromedioPlagio = (totalPlagio / numFilasVisibles)*100;
+
+            // Actualizar el texto del elemento con el nuevo porcentaje promedio de plagio
+            document.getElementById('porcentaje-plagio').textContent = `Porcentaje de plagio promedio: ${porcentajePromedioPlagio.toFixed(2)}%`;
+
             // Mostrar los botones de confirmar y descartar cambios
             document.getElementById('btn-confirmar').style.display = '';
             document.getElementById('btn-descartar').style.display = '';

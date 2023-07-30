@@ -7,7 +7,7 @@ from django.http import HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from nlp.src.python import main
-from correo.views import emailCompartir
+from correo.views import emailCompartir,emailResultado
  
 
 # Esta logica solo funciona en la fase de pruebas, en produccion se debe tomar el documento desde la ruta base, en donde se va a cambiar el config para ingresar al
@@ -39,7 +39,7 @@ def detectar(request, gestion_id):
         resultado.plagio = plagio
         resultado.informacion = informacion
         resultado.save()
-
+        #emailResultado(usuario.correo)
         return HttpResponseRedirect(reverse('revision', args=[resultado.resultado_id]))
     
     return render(request, 'homepage.html')
@@ -185,7 +185,12 @@ def eliminar_filas(request, resultado_id):
         
 
         informacion = resultado.informacion
-        porcentaje_de_plagio = (len(plagio_actualizado) / resultado.informacion['total_oraciones']) * 100
+        # porcentaje_de_plagio = (len(plagio_actualizado) / resultado.informacion['total_oraciones']) * 100
+        porcentaje_de_plagio = 0
+        for oracion, plagio, porcentaje, url, ubicacion in plagio_actualizado:
+            porcentaje_de_plagio += porcentaje
+        porcentaje_de_plagio = (porcentaje_de_plagio / len(plagio)) *100
+        
         print("porcentaje_de_plagio = ", porcentaje_de_plagio)
         informacion['porcentaje_de_plagio'] = porcentaje_de_plagio
         print("resultado.archivo.path = ",resultado.archivo.path)
