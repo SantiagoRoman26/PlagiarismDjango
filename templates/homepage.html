@@ -49,6 +49,13 @@
 
 {% if user.is_authenticated %}
 <h1> Detector</h1>
+{% if messages %}
+  <ul class="messages">
+      {% for message in messages %}
+      <li {% if message.tags %} class="{{ message.tags }}" {% endif %} style= color:black>{{ message }}</li>
+      {% endfor %}
+  </ul>
+{% endif %}
 <h5 style="text-align: center;">Bienvenido {{ user.username }}!</h5>
 {% endif %}
 

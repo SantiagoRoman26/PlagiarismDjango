@@ -12,6 +12,9 @@ from django.template.loader import get_template
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.contrib.sites.shortcuts import get_current_site
+from correo.views import emailRecuperacion
+import random
+import string
 
 # Create your views here.
 def autenticar(request):
@@ -56,6 +59,30 @@ def autenticar(request):
 def desautenticar(request):
     logout(request)
     return render (request, 'login/logout.html')
+
+def recuperar_contraseña(request):
+    if request.method == 'POST':
+        correo = request.POST.get('correo')
+        url = request.build_absolute_uri(reverse('autenticar'))
+        # Generar una contraseña aleatoria
+        nueva_contraseña = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+        try:
+            # Obtener el usuario por su correo electrónico
+            user = User.objects.get(email=correo)
+            
+            # Cambiar la contraseña del usuario
+            user.set_password(nueva_contraseña)
+            user.save()
+            
+            # Enviar la nueva contraseña al correo electrónico del usuario
+            emailRecuperacion(correo, nueva_contraseña, url)
+            
+            return render(request, 'login/recuperacion_exitosa.html')
+        
+        except User.DoesNotExist:
+            print('Usuario no encontrado')
+    
+    return render(request, 'login/recuperar_contraseña.html')
 
 def emailAutorizacion(User_mail, User_nombre, Admin_Email, Admin_nombre, url):
     context = { 
@@ -198,10 +225,10 @@ def passwordChange(request):
         if formulario.is_valid():
             user = formulario.save()
             update_session_auth_hash(request, user)  # Important!
-            messages.success(request, 'Your password was successfully updated!')
+            messages.success(request, 'Tu contraseña fue actualizada!')
             return HttpResponseRedirect(reverse('homepage'))
         else:
-            messages.error(request, 'Please correct the error below.')
+            messages.error(request, 'Corrige los errores.')
     else:
         formulario = PasswordChangeForm(request.user)
 

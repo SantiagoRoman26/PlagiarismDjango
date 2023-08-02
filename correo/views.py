@@ -72,7 +72,7 @@ def emailResultado(mail):
     content = template.render(context)
     email = EmailMultiAlternatives(
         'Un correo de prueba',
-        'Descripcion del correo',
+        'Resultado finalizado',
         settings.EMAIL_HOST_USER,
         [mail] #todos los destinatarios a quien enviarlos
         #cc= [] #envio de una copia
@@ -80,3 +80,20 @@ def emailResultado(mail):
     email.attach_alternative(content, 'text/html')
     email.send()
 
+def emailRecuperacion(User_mail, nuevaContraseña, url):
+    context = { 
+        'user_mail' : User_mail,
+        'nueva_contraseña' : nuevaContraseña,
+        'url' : url,
+               }
+    template = get_template('correo/recuperar_contraseña.html  ')
+    content = template.render(context)
+    email = EmailMultiAlternatives(
+        'Un correo de prueba',
+        'Recuperar contraseña',
+        settings.EMAIL_HOST_USER,
+        [User_mail] #todos los destinatarios a quien enviarlos
+        #cc= [] #envio de una copia
+    )
+    email.attach_alternative(content, 'text/html')
+    email.send()

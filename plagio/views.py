@@ -8,41 +8,79 @@ from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
 from nlp.src.python import main
 from correo.views import emailCompartir,emailResultado
+import threading
+from asgiref.sync import sync_to_async
  
 
 # Esta logica solo funciona en la fase de pruebas, en produccion se debe tomar el documento desde la ruta base, en donde se va a cambiar el config para ingresar al
 # documento a analizar.
 @login_required
+# def detectar(request, gestion_id):
+#     user = request.user
+#     usuario = Usuario.objects.get(correo=user.email)
+#     if usuario.estado:
+        
+#         gestion = GestionDocumentos.objects.get(gestion_id = gestion_id)
+#         # documento = Documento.objects.get(documento_id = gestion.documento_id) 
+#         documento = gestion.documento #ojo
+#         directorio_archivo = documento.archivo.path
+
+#         resultado = Resultado()
+#         resultado.management = gestion
+#         resultado.ejecutando = True
+#         resultado.save()
+
+#         # documento_generado, nombre= main.main()
+#         documento_generado, nombre, plagio, informacion = main.main(directorio_archivo)
+#         with open(documento_generado, 'rb') as archivo:
+#             archivo_django = ContentFile(archivo.read(), name=nombre)
+
+#         resultado.ejecutando = False
+#         resultado.archivo.save(nombre, archivo_django)
+#         resultado.estado = True
+#         resultado.plagio = plagio
+#         resultado.informacion = informacion
+#         resultado.save()
+#         emailResultado(usuario.correo)
+#         return HttpResponseRedirect(reverse('revision', args=[resultado.resultado_id]))
+    
+#     return render(request, 'homepage.html')
 def detectar(request, gestion_id):
     user = request.user
     usuario = Usuario.objects.get(correo=user.email)
-    if usuario.estado:
-        
-        gestion = GestionDocumentos.objects.get(gestion_id = gestion_id)
-        # documento = Documento.objects.get(documento_id = gestion.documento_id) 
-        documento = gestion.documento #ojo
+    gestion = GestionDocumentos.objects.get(gestion_id=gestion_id)
+    documento = gestion.documento
+    if usuario.estado and documento.estado:
         directorio_archivo = documento.archivo.path
-
         resultado = Resultado()
         resultado.management = gestion
         resultado.ejecutando = True
         resultado.save()
+        
+        documento.estado = False
+        documento.save()
+        # Ejecutar el proceso asíncrono en un hilo separado
+        threading.Thread(target=processo_asincrono, args=(gestion_id, directorio_archivo, usuario.correo)).start()
 
-        # documento_generado, nombre= main.main()
-        documento_generado, nombre, plagio, informacion = main.main(directorio_archivo)
-        with open(documento_generado, 'rb') as archivo:
-            archivo_django = ContentFile(archivo.read(), name=nombre)
-
-        resultado.ejecutando = False
-        resultado.archivo.save(nombre, archivo_django)
-        resultado.estado = True
-        resultado.plagio = plagio
-        resultado.informacion = informacion
-        resultado.save()
-        #emailResultado(usuario.correo)
-        return HttpResponseRedirect(reverse('revision', args=[resultado.resultado_id]))
-    
+        # Continuar con la lógica de la vista después de que termine el proceso asíncrono
+        return render (request, 'documento/ejecutando.html', locals())
     return render(request, 'homepage.html')
+# Tu función asíncrona processo_asincrono
+def processo_asincrono(gestion_id, directorio_archivo, correo):
+    # Lógica para el proceso asíncrono, por ejemplo, llamar a main.main()
+    documento_generado, nombre, plagio, informacion = main.main(directorio_archivo)
+
+    # Actualizar el resultado en la base de datos después de que termine el proceso
+    gestion = GestionDocumentos.objects.get(gestion_id=gestion_id)
+    resultado = Resultado.objects.get(management=gestion)
+    resultado.ejecutando = False
+    resultado.archivo.save(nombre, ContentFile(open(documento_generado, 'rb').read()), save=False)
+    resultado.estado = True
+    resultado.plagio = plagio
+    resultado.informacion = informacion
+    resultado.save()
+    emailResultado(correo)
+    return HttpResponseRedirect(reverse('revision', args=[resultado.resultado_id]))
     
 @login_required
 def index(request):

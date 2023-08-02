@@ -103,15 +103,21 @@ def subir_archivo(request):
 @login_required
 def visualizar_archivo(request, gestion_id):
     user = request.user
+    usuario = Usuario.objects.get(correo=user.email)
     gestion = GestionDocumentos.objects.get(gestion_id = gestion_id)
-    # documento = Documento.objects.get(documento_id = gestion.documento_id)
     documento = gestion.documento #ojo
-    if request.method == 'GET': #Cambio post bajar toda la logica fuera del return. 7-
-            
-        context = {
-        'gestion' : gestion,
-        'documento': documento,
-        }
-        return render(request, 'documento/visualizar.html', context)
-       
-    return render(request,'documento/visualizar.html', context)
+    if usuario.estado and documento.estado:
+        if request.method == 'GET': #Cambio post bajar toda la logica fuera del return. 7-   
+            context = {
+            'gestion' : gestion,
+            'documento': documento,
+            }
+            return render(request, 'documento/visualizar.html', context)
+        
+        return render(request,'documento/visualizar.html', context)
+    else:
+        return render(request, 'homepage.html')
+    
+    # documento = Documento.objects.get(documento_id = gestion.documento_id)
+    
+    

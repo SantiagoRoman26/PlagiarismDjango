@@ -7,7 +7,10 @@ from docx.shared import Cm
 from nltk import word_tokenize, sent_tokenize
 from tika import parser
 from docx import Document
-from docx2pdf import convert
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from .helper import archivos_referencia_limpios
 from .metodos_de_similitud import obtener_similitud
 
@@ -123,53 +126,105 @@ def add_hyperlink(paragraph, text, url):
     return hyperlink
 
 
-def guardar_resultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia): #aqui
-    # Crear documento Word con los resultados y guardarlo como un nuevo archivo
-    document = Document()
+# def guardar_resultado(nombre_archivo,  topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia): #aqui
+#     # Crear documento Word con los resultados y guardarlo como un nuevo archivo
+#     document = Document()
 
-    h = document.add_heading(f'Análisis de plagio sobre:\n', 0)
-    h.add_run(nombre_archivo).italic = True
+#     h = document.add_heading(f'Análisis de plagio sobre:\n', 0)
+#     h.add_run(nombre_archivo).italic = True
 
-    p = document.add_paragraph('Tópicos del texto: ')
-    p.add_run(", ".join(topico_con_mas_score)).italic = True
+#     p = document.add_paragraph('Tópicos del texto: ')
+#     p.add_run(", ".join(topico_con_mas_score)).italic = True
 
-    document.add_heading('Análisis de plagio', level=1)
-    document.add_paragraph(f'Total de {len(plagio)} plagios encontrados en {tiempo_que_tardo}')
-    document.add_paragraph(f'Porcentaje de plagio general: {porcentaje_de_plagio}%')
+#     document.add_heading('Análisis de plagio', level=1)
+#     document.add_paragraph(f'Total de {len(plagio)} plagios encontrados en {tiempo_que_tardo}')
+#     document.add_paragraph(f'Porcentaje de plagio general: {porcentaje_de_plagio}%')
 
-    table = document.add_table(rows=1, cols=4)
-    table.style = 'Medium Shading 1 Accent 1'
-    table.autofit = False
+#     table = document.add_table(rows=1, cols=4)
+#     table.style = 'Medium Shading 1 Accent 1'
+#     table.autofit = False
 
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Oración plagiada'
-    hdr_cells[1].text = 'Oración original'
-    hdr_cells[2].text = 'Lugar donde se encontró'
-    hdr_cells[3].text = 'Ubicación'
+#     hdr_cells = table.rows[0].cells
+#     hdr_cells[0].text = 'Oración plagiada'
+#     hdr_cells[1].text = 'Oración original'
+#     hdr_cells[2].text = 'Lugar donde se encontró'
+#     hdr_cells[3].text = 'Ubicación'
 
-    for oracion, plagio, porcentaje, url, ubicacion in plagio:
-        row_cells = table.add_row().cells
-        row_cells[0].text = oracion
-        row_cells[1].text = plagio
-        p = row_cells[2].add_paragraph()
-        if str(url).startswith("http"):
-            add_hyperlink(p, url, url)
-        else:
-            add_hyperlink(p, url, os.path.abspath(path_referencia) + '\\' + url)
-        row_cells[3].text = ubicacion
+#     for oracion, plagio, porcentaje, url, ubicacion in plagio:
+#         row_cells = table.add_row().cells
+#         row_cells[0].text = oracion
+#         row_cells[1].text = plagio
+#         p = row_cells[2].add_paragraph()
+#         if str(url).startswith("http"):
+#             add_hyperlink(p, url, url)
+#         else:
+#             add_hyperlink(p, url, os.path.abspath(path_referencia) + '\\' + url)
+#         row_cells[3].text = ubicacion
 
-    widths = (Cm(5), Cm(5), Cm(3.47), Cm(2.15))
-    for row in table.rows:
-        for idx, width in enumerate(widths):
-            row.cells[idx].width = width
+#     widths = (Cm(5), Cm(5), Cm(3.47), Cm(2.15))
+#     for row in table.rows:
+#         for idx, width in enumerate(widths):
+#             row.cells[idx].width = width
 
-    # Guardar el documento Word
-    nombre_archivo_plagio = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.docx'
-    document.save(nombre_archivo_plagio)
-    print("nombre_archivo_plagio",nombre_archivo_plagio)
-    # Convertir el documento Word a PDF
+#     # Guardar el documento Word
+#     nombre_archivo_plagio = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.docx'
+#     document.save(nombre_archivo_plagio)
+#     print("nombre_archivo_plagio",nombre_archivo_plagio)
+#     # Convertir el documento Word a PDF
+#     nombre_archivo_pdf = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
+#     convert_to_pdf(nombre_archivo_plagio, nombre_archivo_pdf) #quitar
+#     os.remove(nombre_archivo_plagio)
+#     nombre ='Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
+#     return nombre_archivo_pdf, nombre
+
+def guardar_resultado(nombre_archivo, topico_con_mas_score, plagio, tiempo_que_tardo, porcentaje_de_plagio, path_resultado, path_referencia):
+    # Crear el contenido del PDF
+    pdf_content = []
+
+    # Agregar el título y subtítulo al PDF
+    pdf_content.append(Paragraph(f'Análisis de plagio sobre:\n', getSampleStyleSheet().get('Heading1')))
+    pdf_content.append(Paragraph(nombre_archivo, getSampleStyleSheet().get('Title')))
+    pdf_content.append(Spacer(1, 12))  # Espacio en blanco entre párrafos
+
+    # Agregar los tópicos del texto al PDF
+    pdf_content.append(Paragraph('Tópicos del texto:', getSampleStyleSheet().get('Heading2')))
+    pdf_content.append(Paragraph(", ".join(topico_con_mas_score), getSampleStyleSheet().get('Normal')))
+    pdf_content.append(Spacer(1, 12))  # Espacio en blanco entre párrafos
+
+    # Agregar información del análisis de plagio al PDF
+    pdf_content.append(Paragraph(f'Análisis de plagio', getSampleStyleSheet().get('Heading1')))
+    pdf_content.append(Paragraph(f'Total de {len(plagio)} plagios encontrados en {tiempo_que_tardo}', getSampleStyleSheet().get('Normal')))
+    pdf_content.append(Paragraph(f'Porcentaje de plagio general: {porcentaje_de_plagio}%', getSampleStyleSheet().get('Normal')))
+    pdf_content.append(Spacer(1, 12))  # Espacio en blanco entre párrafos
+
+    # Crear una lista con los datos de plagio para la tabla
+    data = [['Oración plagiada', 'Oración original', 'Lugar donde se encontró', 'Ubicación']]
+    for oracion, plagioE, porcentaje, url, ubicacion in plagio:
+        print("algo aqui")
+        data.append([Paragraph(oracion, getSampleStyleSheet().get('Normal')),
+                     Paragraph(plagioE, getSampleStyleSheet().get('Normal')),
+                     Paragraph(url, getSampleStyleSheet().get('Normal')),
+                     Paragraph(ubicacion, getSampleStyleSheet().get('Normal'))])
+
+    # Agregar la tabla al PDF
+    table_style = TableStyle([('BACKGROUND', (0, 0), (-1, 0), colors.gray),
+                              ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                              ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                              ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                              ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                              ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                              ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                              # Controlar el flujo de contenido en las celdas
+                              ])
+
+    # Ajustar automáticamente el tamaño de las celdas
+    col_widths = [142, 142, 120, 61]  # Ajustar el ancho de las columnas basado en el contenido más largo
+    table = Table(data, style=table_style, colWidths=col_widths)
+    pdf_content.append(table)
+
+    # Crear el documento PDF
     nombre_archivo_pdf = path_resultado + 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
-    convert(nombre_archivo_plagio, nombre_archivo_pdf)
-    os.remove(nombre_archivo_plagio)
-    nombre ='Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
+    pdf = SimpleDocTemplate(nombre_archivo_pdf, pagesize=letter)
+    pdf.build(pdf_content)
+    nombre = 'Plagio ' + str(str(nombre_archivo).split(".")[0]) + '.pdf'
     return nombre_archivo_pdf, nombre
